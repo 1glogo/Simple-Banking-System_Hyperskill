@@ -10,7 +10,6 @@ public class SqlAddQueryMethods {
     //General Connection
     private Connection connect(String url) {
         // SQLite connection string
-        /*String url = "jdbc:sqlite:C://sqlite/db/test.db";*/
         Connection conn = null;
         try {
             conn = DriverManager.getConnection(url);
@@ -35,7 +34,6 @@ public class SqlAddQueryMethods {
     }
 
     //Query from Table
-
     public List<String> getAllCardNumbers(String cardNumber, String url){
         String sql = "SELECT number"
                 + "FROM card WHERE number = '?'";
@@ -161,7 +159,6 @@ public class SqlAddQueryMethods {
              PreparedStatement pstmt  = conn.prepareStatement(sql)){
 
             // set the value
-
             pstmt.setString(1,cardNumber);
 
             //Important to update the below to execUpdate;

@@ -1,9 +1,6 @@
 package banking;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.Scanner;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -17,7 +14,7 @@ public class Questions {
         SqlAddQueryMethods addQuery = new SqlAddQueryMethods();
         List<String> cardList = addQuery.getAllCardNumbers(newCard.getCardNumber(), url);
         if(cardList.size()>0 &&
-                cardList.stream().anyMatch(e -> e==newCard.getCardNumber())) {
+                cardList.stream().anyMatch(e -> Objects.equals(e, newCard.getCardNumber()))) {
             newCard.setCardNumber(newCard.newRandomCardNumber());
             cardCheck(newCard, url);
         }
