@@ -7,10 +7,10 @@ import java.util.stream.Collectors;
 
 public class Main {
     public static void main(String[] args) {
-        //specify filename when you run filename "-fileName db.s3db."
+        //Option 1: specify filename when you run filename "-fileName db.s3db."
         //String url = "jdbc:sqlite:.\\"+args[1];
 
-        //below you can manually add the filename (hardcoded)
+        //Option 2: manually add the filename (hardcoded). Used during development for ease
         String url = "jdbc:sqlite:.\\tests.db";
 
         //Creation of database and table
