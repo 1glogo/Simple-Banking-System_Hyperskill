@@ -21,36 +21,8 @@ public class Card {
         String randomNumber9 = String.format("%09d", r.nextInt(999999999));
         String cardNumberExclLuhn = "400000"+randomNumber9;
 
-        //Luhn number calculation
-        //1. All digits are added to an integer collection in order to calculate Luhn NUmber
-        List<Integer> cardNumberList = new ArrayList<>();
-        for (int i = 0; i < cardNumberExclLuhn.length();  i++) {
-            cardNumberList.add(parseInt(cardNumberExclLuhn.substring(i, i+1)));
-        }
-        //1.a. Numbers located in an even index (starting from 0) get to be double
-        //Any number greater than 9, get to be subtracted by 9
-        for (int i = 0 ; i < cardNumberList.size() ; i++) {
-            int value = cardNumberList.get(i);
-            if (i%2 == 0) {
-                value = 2*value;
-            }
-            if (value > 9) {
-                value = value -9;
-            }
-            cardNumberList.set(i, value);
-        }
-
-        //2. Sum of all the amended numbers i carried out
-        // multiples of 10 have Luhn number of 0
-        // in all other cases Luhn_Number = 10-SUM % 10
-        int luhnNumberResult;
-
-        if ((cardNumberList.stream().flatMapToInt(IntStream::of).sum())%10 == 0){
-            luhnNumberResult = 0;
-        } else {
-            luhnNumberResult = 10 - (cardNumberList.stream().flatMapToInt(IntStream::of).sum())%10;
-        }
-        String luhnNumber = Integer.toString(luhnNumberResult);
+        //Generating Luhn number
+        String luhnNumber = Questions.luhnNumberGenerator(cardNumberExclLuhn);
 
         //3. Luhn number is added to the randomly generated number
         return cardNumberExclLuhn+luhnNumber;

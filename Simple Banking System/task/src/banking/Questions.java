@@ -8,14 +8,12 @@ public class Questions {
 
     //Function checks that the Card Number created is unique
     //If not, a new cardNUmber is created and checked again
-    static void cardNumberCheck(Card newCard, String url) {
+    private static void cardNumberCheck(Card newCard, String url) {
 
         //Creating List with any card Number Matches from the database
         SqlAddQueryMethods addQuery = new SqlAddQueryMethods();
-        List<String> cardList = addQuery.getAllCardNumbers(newCard.getCardNumber(), url);
-
-        if(cardList.size()>0 &&
-                cardList.stream().anyMatch(e -> Objects.equals(e, newCard.getCardNumber()))) {
+        List<Card> cardList = addQuery.getMatchingCard(newCard.getCardNumber(), url);/*addQuery.getAllCardNumbers(newCard.getCardNumber(), url);*/
+        if(cardList.size()>0) {
             newCard.setCardNumber(newCard.newRandomCardNumber());
             cardNumberCheck(newCard, url);
         }
@@ -79,6 +77,7 @@ public class Questions {
         //Creating List with any card Number Matches
         SqlAddQueryMethods addQuery = new SqlAddQueryMethods();
         List<Card> cardList = addQuery.getMatchingCard(replyCardNumber,url);
+
         //Ensuring CardNumber Exists and CardNumber & Pin are matching
         if (cardList.size()>0
                 && cardList.get(0).getCardNumber().equals(replyCardNumber)
@@ -94,7 +93,7 @@ public class Questions {
     }
 
     //Questions and actions once user has successfully logged in
-    static void afterLogInQuestions (Card card, String url) {
+    private static void afterLogInQuestions (Card card, String url) {
         Scanner userInput = new Scanner(System.in);
         System.out.println("1. Balance \n2. Add income \n3. Do transfer \n" +
                 "4. Close account \n5. Log out \n0. Exit");
@@ -143,7 +142,7 @@ public class Questions {
         }
         //Transferring between accounts
         else if (reply == 3) {
-            //Start transfer
+            //Start transfer by destination card number
             System.out.println("Transfer");
             System.out.println("Enter card number:");
             String destinationCardNumber = String.valueOf(userInput.next());
@@ -155,7 +154,7 @@ public class Questions {
                 afterLogInQuestions (card,url);
             }
 
-            //Luhn Algorithm check
+            //Luhn Algorithm check for provided account
             else if (!luhnNumberComparison(destinationCardNumber))  {
                 System.out.println("Probably you made a mistake in the card number. Please try again!");
                 afterLogInQuestions (card,url);
@@ -168,26 +167,33 @@ public class Questions {
             }
 
             else if (addQuery.getMatchingCard(destinationCardNumber, url).size() == 1) {
+                //Enter transfer amount
                 System.out.println("Enter how much money you want to transfer: ");
                 int transferAmount = userInput.nextInt();
+
+                //check sending account has adequate balance, , or return to account page
                 if (transferAmount > card.getBalance()) {
                     System.out.println("Not enough money!");
                     afterLogInQuestions (card,url);
-                } else if (transferAmount <= 0) {
+                }
+                //check that transfer amount is not 0, or return to account page
+                else if (transferAmount <= 0) {
                     System.out.println("Transfer amount should be greater than 0");
                     afterLogInQuestions (card,url);
-                } else {
+                }
+                //If transfer information is acceptable, carry out transfer
+                else {
+                    //Increase and decrease balances accordingly
                     addQuery.reduceBalance(card.getCardNumber(),transferAmount, url);
                     addQuery.increaseBalance(destinationCardNumber,transferAmount,url);
+
+                    //Communicate to user success
                     System.out.println("Success!");
+
+                    //Get from database the updated card account information and return to updated account page
                     Card updatedCard = addQuery.getMatchingCard(card.getCardNumber(), url).get(0);
                     afterLogInQuestions (updatedCard,url);
                 }
-
-            }
-             else {
-                System.out.println("you passed everything you lucky devil");
-                afterLogInQuestions (card,url);
             }
         }else if (reply == 4) {
             //Close account
@@ -195,24 +201,24 @@ public class Questions {
             System.out.println("The account has been closed!");
             startQuestions(url);
         }else if (reply == 5) {
+            //Log out to start of application
             startQuestions(url);
         }else if (reply == 0) {
+            //exit program
             userInput.close();
             System.exit(0);
         }
     }
-    //Luhn number Review
-    public static Boolean luhnNumberComparison(String cardNumber) {
-
-        int cardNumberLength = cardNumber.length();
-
-        String cardNumberExclLuhn = cardNumber.substring(0, cardNumberLength-1);
-
+    //method calculates the Luhn Number for a card Number excluding hte Luhn number
+    public static String luhnNumberGenerator(String cardNumberExclLuhn){
+        //Luhn number calculation
+        //1. All digits are added to an integer collection in order to calculate Luhn NUmber
         List<Integer> cardNumberList = new ArrayList<>();
-
         for (int i = 0; i < cardNumberExclLuhn.length();  i++) {
-            cardNumberList.add( parseInt(cardNumberExclLuhn.substring(i, i+1)));
+            cardNumberList.add(parseInt(cardNumberExclLuhn.substring(i, i+1)));
         }
+        //1.a. Numbers located in an even index (starting from 0) get to be double
+        //Any number greater than 9, get to be subtracted by 9
         for (int i = 0 ; i < cardNumberList.size() ; i++) {
             int value = cardNumberList.get(i);
             if (i%2 == 0) {
@@ -223,7 +229,9 @@ public class Questions {
             }
             cardNumberList.set(i, value);
         }
-
+        //2. Sum of all the amended numbers i carried out
+        // multiples of 10 have Luhn number of 0
+        // in all other cases Luhn_Number = 10-SUM % 10
         int luhnNumberResult;
 
         if ((cardNumberList.stream().flatMapToInt(IntStream::of).sum())%10 == 0){
@@ -231,10 +239,24 @@ public class Questions {
         } else {
             luhnNumberResult = 10 - (cardNumberList.stream().flatMapToInt(IntStream::of).sum())%10;
         }
-        String luhnNumberCalculated = Integer.toString(luhnNumberResult);
+        return Integer.toString(luhnNumberResult);
+    }
 
+    //Luhn number check that correct cardNumber has been inputted.
+    //Check is required before accessing database
+    private static Boolean luhnNumberComparison(String cardNumber) {
+
+        //1. Calculate luhn number based on inputted card number
+        //Removing  Luhn number from the cardNumber to be checked
+        int cardNumberLength = cardNumber.length();
+        String cardNumberExclLuhn = cardNumber.substring(0, cardNumberLength-1);
+
+        String luhnNumberCalculated = luhnNumberGenerator(cardNumberExclLuhn);
+
+        //extracting from input the luhn number
         String luhnNumberImported = cardNumber.substring(cardNumberLength-1,cardNumberLength);
 
+        //comparing the two
         return luhnNumberCalculated.equals(luhnNumberImported);
     }
 }

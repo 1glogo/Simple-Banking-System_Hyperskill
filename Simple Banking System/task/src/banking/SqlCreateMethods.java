@@ -3,6 +3,7 @@ package banking;
 import java.sql.*;
 
 public class SqlCreateMethods {
+    //Creating new database in case there is not other database already created with the same name.
     public static void createNewDatabase(String url) {
 
         try (Connection conn = DriverManager.getConnection(url)) {
@@ -16,10 +17,8 @@ public class SqlCreateMethods {
             System.out.println(e.getMessage());
         }
     }
+    //Creating a new table for the cards only if table does not exist
     public static void createNewTable(String url) {
-        // SQLite connection string
-        /*String url = "jdbc:sqlite:.\\tests.db";*/
-
         // SQL statement for creating a new table
         String sql = "CREATE TABLE IF NOT EXISTS card (\n"
                 + "	id INTEGER PRIMARY KEY,\n"
@@ -27,7 +26,6 @@ public class SqlCreateMethods {
                 + "	pin TEXT,\n"
                 + "	balance INTEGER DEFAULT 0\n"
                 + ");";
-
         try (Connection conn = DriverManager.getConnection(url);
              Statement stmt = conn.createStatement()) {
             // create a new table
